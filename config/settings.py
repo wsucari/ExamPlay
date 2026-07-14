@@ -14,11 +14,16 @@ def env_bool(name, default=False):
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-solo-desarrollo-cambiar-en-produccion")
-DEBUG = env_bool("DEBUG", True)
+
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+
 if not DEBUG and not os.getenv("SECRET_KEY"):
     raise ImproperlyConfigured("SECRET_KEY es obligatoria cuando DEBUG=False.")
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
+
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 INSTALLED_APPS = [
     "daphne",
