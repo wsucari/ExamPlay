@@ -1,0 +1,11 @@
+{% if avatar and avatar.image %}
+  <span class="participant-avatar avatar-{{ size|default:'md' }}" title="{{ avatar.name }}">
+    <img src="{{ avatar.image.url }}" alt="Avatar {{ avatar.name }}">
+  </span>
+{% elif avatar %}
+  <span class="participant-avatar avatar-{{ size|default:'md' }}" style="--avatar-bg: {{ avatar.background_color }}" title="{{ avatar.name }}" role="img" aria-label="Avatar {{ avatar.name }}">
+    <span aria-hidden="true">{{ avatar.symbol }}</span>
+  </span>
+{% else %}
+  <span class="participant-avatar avatar-{{ size|default:'md' }} avatar-fallback" title="Avatar histórico" role="img" aria-label="Avatar no disponible"><span aria-hidden="true">🙂</span></span>
+{% endif %}

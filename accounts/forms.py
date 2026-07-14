@@ -4,87 +4,37 @@ from django.contrib.auth.models import User
 
 
 class TeacherRegistrationForm(UserCreationForm):
-    first_name = forms.CharField(
-        label="Nombres",
-        max_length=150,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Ingrese sus nombres",
-                "autofocus": True,
-            }
-        ),
-    )
-
-    last_name = forms.CharField(
-        label="Apellidos",
-        max_length=150,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Ingrese sus apellidos",
-            }
-        ),
-    )
-
-    email = forms.EmailField(
-        label="Correo electrónico",
-        widget=forms.EmailInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "docente@correo.com",
-            }
-        ),
-    )
-
-    username = forms.CharField(
-        label="Nombre de usuario",
-        max_length=150,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Elija un nombre de usuario",
-            }
-        ),
-    )
-
-    password1 = forms.CharField(
-        label="Contraseña",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Ingrese una contraseña",
-            }
-        ),
-    )
-
-    password2 = forms.CharField(
-        label="Confirmar contraseña",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Repita la contraseña",
-            }
-        ),
-    )
+    first_name = forms.CharField(label="Nombres", max_length=150)
+    last_name = forms.CharField(label="Apellidos", max_length=150)
+    email = forms.EmailField(label="Correo electrónico")
 
     class Meta:
         model = User
-        fields = [
-            "first_name",
-            "last_name",
-            "email",
-            "username",
-            "password1",
-            "password2",
-        ]
+        fields = ["first_name", "last_name", "email", "username", "password1", "password2"]
+        labels = {"username": "Nombre de usuario"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        placeholders = {
+            "first_name": "Ingresa tus nombres",
+            "last_name": "Ingresa tus apellidos",
+            "email": "docente@correo.com",
+            "username": "Elige un nombre de usuario",
+            "password1": "Ingresa una contraseña",
+            "password2": "Repite la contraseña",
+        }
+        for name, field in self.fields.items():
+            field.widget.attrs.update({"class": "form-control", "placeholder": placeholders[name]})
 
     def clean_email(self):
-        email = self.cleaned_data["email"].lower()
-
+        email = self.cleaned_data["email"].strip().lower()
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(
-                "Ya existe una cuenta registrada con este correo."
-            )
-
+            raise forms.ValidationError("Ya existe una cuenta registrada con este correo.")
         return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user

@@ -8,6 +8,7 @@ urlpatterns = [
     path("", include("core.urls")),
     path("cuentas/", include("accounts.urls")),
     path("cuestionarios/", include("quizzes.urls")),
+    path("partidas/", include("livegames.urls")),
 ]
 
 if settings.DEBUG:

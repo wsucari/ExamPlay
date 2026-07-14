@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Eliminar pregunta | ExamPlay{% endblock %}
+{% block content %}<section class="py-5"><div class="container"><div class="row justify-content-center"><div class="col-lg-6"><div class="card border-0 shadow"><div class="card-body p-5 text-center">
+  <div class="delete-icon">⚠️</div><h1 class="h2">Eliminar pregunta</h1><p class="lead">{{ question.text }}</p><p class="text-muted">También se eliminarán sus alternativas. Esta acción no se puede deshacer.</p>
+  <form method="post">{% csrf_token %}<button class="btn btn-danger btn-lg" type="submit">Sí, eliminar</button> <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-outline-secondary btn-lg">Cancelar</a></form>
+</div></div></div></div></div></section>{% endblock %}

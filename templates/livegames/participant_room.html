@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ participant.nickname }} | ExamPlay{% endblock %}
+{% block content %}
+<section class="game-background participant-stage">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center text-white mb-4">
+      <div class="participant-identity">
+        {% include "livegames/_avatar.html" with avatar=participant.avatar size="md" %}
+        <div><small>Jugando como</small><h1 class="h4 mb-0">{{ participant.nickname }}</h1></div>
+      </div>
+      <div class="text-end"><small>Puntaje</small><div class="h3 mb-0">{{ participant.score }}</div></div>
+    </div>
+
+    {% if game.status == 'waiting' %}
+      <div class="live-panel text-center">
+        {% include "livegames/_avatar.html" with avatar=participant.avatar size="hero" %}
+        <h2 class="mt-3">¡Ya estás dentro!</h2>
+        <p class="lead">Espera a que el docente inicie la partida.</p>
+        <span class="badge text-bg-dark fs-5">PIN {{ game.pin }}</span>
+      </div>
+    {% elif game.status == 'question' %}
+      <div class="live-panel">
+        <div class="d-flex justify-content-between"><div><span class="badge text-bg-primary">Pregunta {{ game.current_question.order }}</span> <span class="badge text-bg-light">{{ game.current_question.get_question_type_display }}</span></div><span class="timer" data-started="{{ game.question_started_at|date:'c' }}" data-limit="{{ game.current_question.time_limit }}">{{ game.current_question.time_limit }} s</span></div>
+        <h2 class="h3 text-center my-4">{{ game.current_question.text }}</h2>
+        {% if game.current_question.image %}<img class="question-live-image" src="{{ game.current_question.image.url }}" alt="Imagen de la pregunta">{% endif %}
+        {% if answer %}
+          <div class="response-received text-center"><div class="display-4">✓</div><h3>Respuesta recibida</h3><p>Espera a que el docente publique los resultados.</p></div>
+        {% elif game.current_question.question_type == 'multiple_choice' %}
+          <form method="post" action="{% url 'livegames:submit_answer' game.pk %}" id="answer-form" data-answer-mode="multiple_choice">{% csrf_token %}<p class="text-muted">Selecciona una o varias alternativas y luego confirma tu respuesta.</p><div class="row g-3">{% for option in options %}<div class="col-md-6"><label class="answer-card answer-selectable answer-{{ forloop.counter }}"><input class="form-check-input flex-shrink-0" type="checkbox" name="options" value="{{ option.pk }}"><span>{{ option.text }}</span></label></div>{% endfor %}</div><button class="btn btn-warning btn-lg w-100 mt-3" type="submit">Confirmar respuesta</button></form>
+        {% elif game.current_question.question_type == 'true_false' %}
+          <form method="post" action="{% url 'livegames:submit_answer' game.pk %}" id="answer-form" data-answer-mode="choice">{% csrf_token %}<div class="row g-3">{% for option in options %}<div class="col-md-6"><button class="answer-card answer-button answer-{{ forloop.counter }}" type="submit" name="option" value="{{ option.pk }}">{{ option.text }}</button></div>{% endfor %}</div></form>
+        {% elif game.current_question.question_type == 'short_answer' %}
+          <form method="post" action="{% url 'livegames:submit_answer' game.pk %}" id="answer-form" data-answer-mode="short">{% csrf_token %}<label class="form-label fw-semibold" for="short-answer">Escribe una palabra o frase breve</label><input class="form-control form-control-lg" id="short-answer" name="short_answer" maxlength="300" autocomplete="off" autofocus required><button class="btn btn-warning btn-lg w-100 mt-3" type="submit">Enviar respuesta</button></form>
+        {% elif game.current_question.question_type == 'ordering' %}
+          <form method="post" action="{% url 'livegames:submit_answer' game.pk %}" id="answer-form" data-answer-mode="ordering">{% csrf_token %}<p class="text-muted">Usa las flechas para colocar los elementos en la secuencia correcta.</p><input type="hidden" name="ordered_ids" id="ordered-ids" value="{{ ordered_ids_json }}"><div class="ordering-list" id="ordering-list">{% for option in options %}<div class="ordering-item" data-option-id="{{ option.pk }}"><span class="ordering-handle">↕</span><strong>{{ option.text }}</strong><span class="ms-auto"><button type="button" class="btn btn-sm btn-light" data-direction="up" aria-label="Mover arriba">↑</button> <button type="button" class="btn btn-sm btn-light" data-direction="down" aria-label="Mover abajo">↓</button></span></div>{% endfor %}</div><button class="btn btn-warning btn-lg w-100 mt-3" type="submit">Confirmar orden</button></form>
+        {% elif game.current_question.question_type == 'matching' %}
+          <form method="post" action="{% url 'livegames:submit_answer' game.pk %}" id="answer-form" data-answer-mode="matching">{% csrf_token %}<p class="text-muted">Selecciona la pareja correcta para cada elemento.</p><div class="d-grid gap-3">{% for option in options %}<div class="matching-row"><label class="fw-bold" for="match-{{ option.pk }}">{{ option.text }}</label><span class="matching-arrow">↔</span><select class="form-select" id="match-{{ option.pk }}" name="match_{{ option.pk }}" required><option value="">Selecciona…</option>{% for right in right_options %}<option value="{{ right.pk }}">{{ right.match_text }}</option>{% endfor %}</select></div>{% endfor %}</div><button class="btn btn-warning btn-lg w-100 mt-3" type="submit">Confirmar relaciones</button></form>
+        {% endif %}
+      </div>
+    {% elif game.status == 'results' %}
+      <div class="row g-4">
+        <div class="col-lg-7"><div class="live-panel text-center">{% include "livegames/_avatar.html" with avatar=participant.avatar size="lg" %}{% if answer %}{% if answer.is_correct %}<div class="display-3">🎉</div><h2 class="text-success">¡Respuesta correcta!</h2><p class="display-6 fw-bold">+{{ answer.points_earned }} puntos</p>{% else %}<div class="display-3">💪</div><h2>Esta vez no fue correcta</h2><p>Tu respuesta: <strong>{{ answer.response_display }}</strong></p><p>Respuesta esperada: <strong>{{ game.current_question.correct_answer_display }}</strong></p>{% endif %}{% else %}<h2>Tiempo terminado</h2><p>No se registró una respuesta.</p><p>Respuesta esperada: <strong>{{ game.current_question.correct_answer_display }}</strong></p>{% endif %}</div></div>
+        <div class="col-lg-5"><div class="live-panel"><h2 class="h4">Clasificación parcial</h2><p>Estás en el puesto <strong>#{{ position }}</strong></p><ol class="ranking-list">{% for item in participants|slice:':10' %}<li {% if item.pk == participant.pk %}class="me-row"{% endif %}>{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<span class="ranking-name">{{ item.nickname }}</span><strong>{{ item.score }}</strong></li>{% endfor %}</ol></div></div>
+      </div>
+    {% else %}
+      <div class="live-panel text-center">
+        <div class="display-2">🏆</div><h2 class="display-5">Podio final</h2>
+        <p class="lead">Tu posición: <strong>#{{ position }}</strong> · {{ participant.score }} puntos</p>
+        <div class="podium-grid">{% for item in participants|slice:':3' %}<article class="podium-place podium-{{ forloop.counter }} {% if item.pk == participant.pk %}podium-me{% endif %}"><span class="podium-medal">#{{ forloop.counter }}</span>{% include "livegames/_avatar.html" with avatar=item.avatar size="xl" %}<strong>{{ item.nickname }}</strong><span>{{ item.score }} pts</span></article>{% endfor %}</div>
+        {% if participants|length > 3 %}<ol class="ranking-list text-start mx-auto ranking-final">{% for item in participants|slice:'3:' %}<li {% if item.pk == participant.pk %}class="me-row"{% endif %}>{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<span class="ranking-name">{{ item.nickname }}</span><strong>{{ item.score }}</strong></li>{% endfor %}</ol>{% endif %}
+        <a href="{% url 'core:home' %}" class="btn btn-warning btn-lg">Volver al inicio</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}<script>ExamPlayLive.connect({{ game.pk }}, "participante"); ExamPlayLive.timer();</script>{% endblock %}

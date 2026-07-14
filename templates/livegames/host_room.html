@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Partida {{ game.pin }} | ExamPlay{% endblock %}
+{% block content %}
+<section class="py-4 live-stage">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+      <div>
+        <span class="badge text-bg-light">{{ game.get_status_display }}</span>
+        <h1 class="h3 mt-2 mb-0">{{ game.quiz.title }}</h1>
+      </div>
+      <div class="pin-display"><span>PIN</span><strong>{{ game.pin }}</strong></div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-4">
+      {% if game.projection_mode %}
+        <span class="badge rounded-pill text-bg-success px-3 py-2">🔒 Modo proyección activado</span>
+      {% else %}
+        <span class="badge rounded-pill text-bg-light px-3 py-2">👁 Resultados visibles</span>
+      {% endif %}
+      <form method="post" action="{% url 'livegames:toggle_projection_mode' game.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-sm {% if game.projection_mode %}btn-outline-light{% else %}btn-warning{% endif %}" type="submit">
+          {% if game.projection_mode %}Mostrar resultados{% else %}Ocultar resultados para proyectar{% endif %}
+        </button>
+      </form>
+    </div>
+
+    {% if game.status == 'waiting' %}
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="live-panel text-center">
+            <div class="display-4">👋</div>
+            <h2>Sala de espera</h2>
+            <p class="text-muted">Los estudiantes ingresan en ExamPlay usando el PIN.</p>
+            <div class="participant-grid">
+              {% for item in participants %}<span class="participant-chip">{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<span>{{ item.nickname }}</span></span>
+              {% empty %}<p class="text-muted">Esperando participantes…</p>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="live-panel">
+            <h3 class="h5">{{ participants|length }} participante{{ participants|length|pluralize }}</h3>
+            <form method="post" action="{% url 'livegames:host_action' game.pk 'start' %}">
+              {% csrf_token %}
+              <button class="btn btn-warning btn-lg w-100 mt-3" {% if not participants %}disabled{% endif %}>Iniciar partida</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% elif game.status == 'question' %}
+      <div class="live-panel">
+        <div class="d-flex justify-content-between">
+          <div>
+            <span class="badge text-bg-warning">Pregunta {{ game.current_question.order }}</span>
+            <span class="badge text-bg-light">{{ game.current_question.get_question_type_display }}</span>
+          </div>
+          <span class="timer" data-started="{{ game.question_started_at|date:'c' }}" data-limit="{{ game.current_question.time_limit }}">{{ game.current_question.time_limit }} s</span>
+        </div>
+        <h2 class="display-6 text-center my-4">{{ game.current_question.text }}</h2>
+        {% if game.current_question.image %}<img class="question-live-image" src="{{ game.current_question.image.url }}" alt="Imagen de la pregunta">{% endif %}
+
+        {% if game.current_question.question_type == 'multiple_choice' or game.current_question.question_type == 'true_false' %}
+          <div class="row g-3">
+            {% for option in display_options %}
+              <div class="col-md-6"><div class="answer-card answer-{{ forloop.counter }}">{{ option.text }}</div></div>
+            {% endfor %}
+          </div>
+        {% elif game.current_question.question_type == 'short_answer' %}
+          <div class="answer-prompt text-center"><div class="display-5">⌨️</div><strong>Escribe una respuesta breve</strong><p class="mb-0">La respuesta correcta se revelará al terminar.</p></div>
+        {% elif game.current_question.question_type == 'ordering' %}
+          <p class="text-center fw-semibold">Ordena estos elementos en la secuencia correcta:</p><div class="ordering-preview">{% for option in display_options %}<span>{{ option.text }}</span>{% endfor %}</div>
+        {% elif game.current_question.question_type == 'matching' %}
+          <p class="text-center fw-semibold">Relaciona cada elemento con su pareja:</p><div class="matching-preview"><div>{% for option in display_options %}<span>{{ option.text }}</span>{% endfor %}</div><div>{% for option in matching_right_options %}<span>{{ option.match_text }}</span>{% endfor %}</div></div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mt-4">
+          <strong>{{ answer_count }} de {{ participants|length }} respondieron</strong>
+          <form method="post" action="{% url 'livegames:host_action' game.pk 'results' %}" data-auto-publish data-answered="{{ answer_count }}" data-participants="{{ participants|length }}">{% csrf_token %}<button class="btn btn-warning btn-lg">Publicar resultados</button></form>
+        </div>
+      </div>
+    {% elif game.status == 'results' %}
+      {% if game.projection_mode %}
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="live-panel text-center">
+              <div class="display-4">🔒</div>
+              <h2>Resultados ocultos</h2>
+              <p class="text-muted">Las soluciones, estadísticas y la clasificación parcial no se muestran en la pantalla proyectada.</p>
+              <form class="mt-4" method="post" action="{% url 'livegames:host_action' game.pk 'next' %}">{% csrf_token %}<button class="btn btn-warning btn-lg w-100">Siguiente pregunta</button></form>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="live-panel">
+              <h2>Resultados de la pregunta</h2>
+              {% if option_results %}
+                <div class="d-grid gap-2 mt-3">{% for option in option_results %}<div class="result-row {% if option.is_correct %}correct{% else %}incorrect{% endif %}"><span class="result-answer-icon" aria-hidden="true">{% if option.is_correct %}✓{% else %}×{% endif %}</span><span class="result-answer-text">{{ option.text }}{% if option.is_correct %}<small>Respuesta correcta</small>{% endif %}</span><strong class="result-answer-count">{{ option.response_count }} respuesta{{ option.response_count|pluralize }}</strong></div>{% endfor %}</div>
+              {% else %}
+                <div class="row g-3 my-2"><div class="col-6"><div class="result-summary correct"><strong>{{ result_summary.correct }}</strong><span>Correctas</span></div></div><div class="col-6"><div class="result-summary incorrect"><strong>{{ result_summary.incorrect }}</strong><span>Incorrectas</span></div></div></div>
+                <div class="alert alert-light"><strong>Respuesta esperada:</strong> {{ game.current_question.correct_answer_display }}</div>
+              {% endif %}
+              <form class="mt-4" method="post" action="{% url 'livegames:host_action' game.pk 'next' %}">{% csrf_token %}<button class="btn btn-warning btn-lg w-100">Siguiente</button></form>
+            </div>
+          </div>
+          <div class="col-lg-5"><div class="live-panel"><h2 class="h4">Clasificación parcial</h2><ol class="ranking-list">{% for item in participants|slice:':10' %}<li>{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<span class="ranking-name">{{ item.nickname }}</span><strong>{{ item.score }}</strong></li>{% endfor %}</ol></div></div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="live-panel text-center">
+            {% if game.projection_mode %}
+              <div class="display-3">🔒</div>
+              <h2>Clasificación final oculta</h2>
+              <p class="text-muted">Usa «Mostrar resultados» cuando quieras revelar la clasificación en esta pantalla.</p>
+            {% else %}
+              <div class="display-3">🏆</div>
+              <h2>Podio final</h2>
+              <div class="podium-grid">{% for item in participants|slice:':3' %}<article class="podium-place podium-{{ forloop.counter }}"><span class="podium-medal">#{{ forloop.counter }}</span>{% include "livegames/_avatar.html" with avatar=item.avatar size="xl" %}<strong>{{ item.nickname }}</strong><span>{{ item.score }} pts</span></article>{% empty %}<p>Sin participantes</p>{% endfor %}</div>
+              {% if participants|length > 3 %}<ol class="ranking-list text-start">{% for item in participants|slice:'3:' %}<li>{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<span class="ranking-name">{{ item.nickname }}</span><strong>{{ item.score }} pts</strong></li>{% endfor %}</ol>{% endif %}
+              <a href="{% url 'livegames:results' game.pk %}" class="btn btn-warning btn-lg">Ver detalle</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if game.status != 'finished' %}
+      <div class="text-end mt-3"><form method="post" action="{% url 'livegames:host_action' game.pk 'finish' %}" onsubmit="return confirm('¿Finalizar la partida?');">{% csrf_token %}<button class="btn btn-sm btn-outline-light">Finalizar partida</button></form></div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}<script>ExamPlayLive.connect({{ game.pk }}, "docente"); ExamPlayLive.timer();</script>{% endblock %}

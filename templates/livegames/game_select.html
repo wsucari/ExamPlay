@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Nueva partida | ExamPlay{% endblock %}
+{% block content %}<section class="py-5"><div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4"><div><p class="text-primary fw-semibold mb-1">Partida en vivo</p><h1 class="display-6 fw-bold">Elige un cuestionario</h1></div><a href="{% url 'livegames:history' %}" class="btn btn-outline-secondary">Ver historial</a></div>
+  {% if quizzes %}<div class="row g-4">{% for quiz in quizzes %}<div class="col-md-6 col-lg-4"><div class="card quiz-card h-100 border-0 shadow-sm"><div class="card-body p-4"><h2 class="h4">{{ quiz.title }}</h2><p class="text-muted">{{ quiz.description|default:"Sin descripción"|truncatechars:100 }}</p><p><strong>{{ quiz.questions.count }}</strong> pregunta{{ quiz.questions.count|pluralize }}</p>
+    {% if quiz.is_ready_to_play %}<form method="post">{% csrf_token %}<input type="hidden" name="quiz" value="{{ quiz.pk }}"><button type="submit" class="btn btn-primary w-100">Crear sala</button></form>{% else %}<div class="alert alert-warning small mb-0">Completa al menos una pregunta válida antes de jugar.</div>{% endif %}
+  </div></div></div>{% endfor %}</div>{% else %}<div class="empty-state text-center"><h2>No hay cuestionarios activos listos</h2><p class="text-muted">Crea uno y agrega sus preguntas.</p><a href="{% url 'quizzes:create' %}" class="btn btn-primary">Crear cuestionario</a></div>{% endif %}
+</div></section>{% endblock %}

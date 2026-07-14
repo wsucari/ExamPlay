@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Elige tu avatar | ExamPlay{% endblock %}
+{% block content %}
+<section class="game-background">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-xl-8">
+        <div class="card border-0 shadow-lg avatar-join-card">
+          <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+              <span class="badge text-bg-dark fs-6 mb-3">PIN {{ game.pin }}</span>
+              <h1 class="h2 fw-bold">Elige quién te representará</h1>
+              <p class="text-muted">Selecciona un avatar y escribe tu apodo para entrar.</p>
+            </div>
+            <form method="post" novalidate id="participant-profile-form">
+              {% csrf_token %}
+              <div class="mb-4">
+                <label class="form-label fw-bold" for="id_nickname">Tu apodo</label>
+                {{ form.nickname }}
+                {% for error in form.nickname.errors %}<div class="text-danger small mt-2">{{ error }}</div>{% endfor %}
+              </div>
+
+              <fieldset>
+                <legend class="h5 fw-bold">Selecciona un avatar</legend>
+                <div class="avatar-filters" role="group" aria-label="Filtrar avatares">
+                  <button type="button" class="btn btn-sm btn-dark active" data-avatar-filter="all">Todos</button>
+                  <button type="button" class="btn btn-sm btn-outline-dark" data-avatar-filter="animal">Animales</button>
+                  <button type="button" class="btn btn-sm btn-outline-dark" data-avatar-filter="object">Objetos</button>
+                  <button type="button" class="btn btn-sm btn-outline-dark" data-avatar-filter="character">Personajes</button>
+                </div>
+                <div class="avatar-selector-grid" id="avatar-selector">
+                  {% for avatar in avatars %}
+                    <label class="avatar-choice" data-avatar-category="{{ avatar.category }}">
+                      <input type="radio" name="avatar" value="{{ avatar.pk }}" {% if selected_avatar_id == avatar.pk|stringformat:'s' %}checked{% endif %} required>
+                      {% include "livegames/_avatar.html" with avatar=avatar size="xl" %}
+                      <span class="avatar-choice-name">{{ avatar.name }}</span>
+                      <span class="avatar-choice-check" aria-hidden="true">✓</span>
+                    </label>
+                  {% empty %}
+                    <div class="alert alert-warning grid-column-full">No hay avatares disponibles. Solicita al docente que habilite uno.</div>
+                  {% endfor %}
+                </div>
+                {% for error in form.avatar.errors %}<div class="text-danger small mt-2" id="avatar-error">{{ error }}</div>{% endfor %}
+              </fieldset>
+              <button class="btn btn-warning btn-lg w-100 mt-4" type="submit" {% if not avatars %}disabled{% endif %}>Entrar a la sala</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

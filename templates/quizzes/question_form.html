@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | ExamPlay{% endblock %}
+{% block content %}<section class="py-5"><div class="container"><div class="row justify-content-center"><div class="col-xl-10">
+  <a href="{% url 'quizzes:detail' quiz.pk %}" class="text-decoration-none">← Volver a {{ quiz.title }}</a>
+  <form method="post" enctype="multipart/form-data" class="card border-0 shadow mt-3" id="question-builder"><div class="card-body p-4 p-md-5">
+    {% csrf_token %}<h1 class="h2 fw-bold mb-4">{{ page_title }}</h1>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}<div class="{% if field.name == 'text' or field.name == 'image' %}col-12{% elif field.name == 'answer_case_sensitive' %}col-12 case-sensitive-setting{% else %}col-md-4{% endif %}">
+        <div class="{% if field.name == 'answer_case_sensitive' %}form-check{% endif %}">
+          {% if field.name == 'answer_case_sensitive' %}{{ field }}{% endif %}<label class="{% if field.name == 'answer_case_sensitive' %}form-check-label{% else %}form-label fw-semibold{% endif %}" for="{{ field.id_for_label }}">{{ field.label }}</label>{% if field.name != 'answer_case_sensitive' %}{{ field }}{% endif %}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>{% endfor %}
+    </div>
+    <div class="alert alert-primary mt-3 mb-0" id="type-help"></div>
+    <hr class="my-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h2 class="h4 mb-1" id="components-title">Elementos de respuesta</h2><p class="text-muted small mb-0" id="components-help"></p></div><button class="btn btn-outline-primary" type="button" id="add-component">+ Agregar elemento</button></div>
+    {{ formset.management_form }}{% if formset.non_form_errors %}<div class="alert alert-danger mt-3">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="d-grid gap-3 mt-3" id="component-list">
+      {% for option_form in formset %}<div class="option-editor component-row" data-component-row>
+        {% for hidden in option_form.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="row g-3 align-items-end">
+          <div class="col-auto component-position"><span class="badge text-bg-dark component-number">{{ forloop.counter }}</span></div>
+          <div class="col component-text"><label class="form-label fw-semibold" for="{{ option_form.text.id_for_label }}">Elemento</label>{{ option_form.text }}{% for error in option_form.text.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          <div class="col component-match"><label class="form-label fw-semibold" for="{{ option_form.match_text.id_for_label }}">Pareja correspondiente</label>{{ option_form.match_text }}{% for error in option_form.match_text.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          <div class="col-auto component-correct"><div class="form-check mb-2 correct-checkbox">{{ option_form.is_correct }}<label class="form-check-label" for="{{ option_form.is_correct.id_for_label }}">Correcta</label></div><div class="form-check mb-2 correct-radio" hidden><input class="form-check-input correct-component-radio" type="radio" name="correct_component" id="correct-{{ option_form.prefix }}" value="{{ forloop.counter0 }}" {% if option_form.is_correct.value %}checked{% endif %}><label class="form-check-label" for="correct-{{ option_form.prefix }}">Correcta</label></div></div>
+          <div class="col-auto d-flex gap-1 component-actions"><button type="button" class="btn btn-light move-up" title="Mover arriba">↑</button><button type="button" class="btn btn-light move-down" title="Mover abajo">↓</button>{% if option_form.DELETE %}<span class="form-check mt-2 ms-2">{{ option_form.DELETE }} <label class="form-check-label text-danger" for="{{ option_form.DELETE.id_for_label }}">Quitar</label></span>{% endif %}</div>
+        </div>
+      </div>{% endfor %}
+    </div>
+    <template id="empty-component-template"><div class="option-editor component-row" data-component-row>
+      {% with option_form=formset.empty_form %}{% for hidden in option_form.hidden_fields %}{{ hidden }}{% endfor %}
+      <div class="row g-3 align-items-end"><div class="col-auto component-position"><span class="badge text-bg-dark component-number"></span></div><div class="col component-text"><label class="form-label fw-semibold" for="{{ option_form.text.id_for_label }}">Elemento</label>{{ option_form.text }}</div><div class="col component-match"><label class="form-label fw-semibold" for="{{ option_form.match_text.id_for_label }}">Pareja correspondiente</label>{{ option_form.match_text }}</div><div class="col-auto component-correct"><div class="form-check mb-2 correct-checkbox">{{ option_form.is_correct }}<label class="form-check-label" for="{{ option_form.is_correct.id_for_label }}">Correcta</label></div><div class="form-check mb-2 correct-radio" hidden><input class="form-check-input correct-component-radio" type="radio" name="correct_component" id="correct-{{ option_form.prefix }}" value="__prefix__"><label class="form-check-label" for="correct-{{ option_form.prefix }}">Correcta</label></div></div><div class="col-auto d-flex gap-1 component-actions"><button type="button" class="btn btn-light move-up">↑</button><button type="button" class="btn btn-light move-down">↓</button>{% if option_form.DELETE %}<span class="form-check mt-2 ms-2">{{ option_form.DELETE }} <label class="form-check-label text-danger" for="{{ option_form.DELETE.id_for_label }}">Quitar</label></span>{% endif %}</div></div>{% endwith %}
+    </div></template>
+    <div class="d-flex gap-2 mt-4"><button class="btn btn-primary btn-lg" type="submit">Guardar pregunta</button><a class="btn btn-outline-secondary btn-lg" href="{% url 'quizzes:detail' quiz.pk %}">Cancelar</a></div>
+  </div></form>
+</div></div></div></section>{% endblock %}
+{% block extra_js %}<script>QuestionBuilder.init();</script>{% endblock %}

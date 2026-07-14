@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Historial de partidas | ExamPlay{% endblock %}
+{% block content %}
+<section class="py-5"><div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4"><div><p class="text-primary fw-semibold mb-1">Panel docente</p><h1 class="display-6 fw-bold">Historial de partidas</h1></div><a href="{% url 'livegames:create' %}" class="btn btn-primary btn-lg">Nueva partida</a></div>
+  {% if games %}
+    <div class="table-responsive card border-0 shadow-sm"><table class="table align-middle mb-0"><thead><tr><th>Cuestionario</th><th>PIN</th><th>Estado</th><th>Participantes</th><th>Avatares</th><th>Fecha</th><th></th></tr></thead><tbody>
+      {% for game in games %}<tr><td><strong>{{ game.quiz.title }}</strong></td><td>{{ game.pin }}</td><td><span class="badge {% if game.status == 'finished' %}text-bg-secondary{% else %}text-bg-success{% endif %}">{{ game.get_status_display }}</span></td><td>{{ game.participant_total }}</td><td><div class="avatar-stack" aria-label="Avatares de participantes">{% for item in game.participants.all|slice:':5' %}{% include "livegames/_avatar.html" with avatar=item.avatar size="xs" %}{% empty %}<span class="text-muted">—</span>{% endfor %}{% if game.participant_total > 5 %}<span class="avatar-stack-more">+{{ game.participant_total|add:'-5' }}</span>{% endif %}</div></td><td>{{ game.created_at|date:'d/m/Y H:i' }}</td><td class="text-end">{% if game.status == 'finished' %}<a href="{% url 'livegames:results' game.pk %}" class="btn btn-sm btn-outline-primary">Resultados</a>{% else %}<a href="{% url 'livegames:host_room' game.pk %}" class="btn btn-sm btn-primary">Abrir sala</a>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% else %}
+    <div class="empty-state text-center"><div class="empty-state-icon">🎮</div><h2>Aún no has creado partidas</h2><a href="{% url 'livegames:create' %}" class="btn btn-primary">Crear la primera</a></div>
+  {% endif %}
+</div></section>
+{% endblock %}

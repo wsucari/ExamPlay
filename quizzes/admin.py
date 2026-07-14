@@ -1,12 +1,15 @@
 from django.contrib import admin
 
 from .models import AnswerOption, Question, Quiz
+from .forms import QuestionComponentsFormSet
 
 
 class AnswerOptionInline(admin.TabularInline):
     model = AnswerOption
-    extra = 4
-    min_num = 2
+    formset = QuestionComponentsFormSet
+    extra = 2
+    min_num = 0
+    max_num = 10
 
 
 class QuestionInline(admin.TabularInline):
@@ -17,81 +20,33 @@ class QuestionInline(admin.TabularInline):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "teacher",
-        "is_active",
-        "created_at",
-    )
+    list_display = ("title", "teacher", "is_active", "question_count", "created_at")
+    list_filter = ("is_active", "created_at")
+    search_fields = ("title", "description", "teacher__username", "teacher__email")
+    readonly_fields = ("created_at", "updated_at")
+    inlines = (QuestionInline,)
 
-    list_filter = (
-        "is_active",
-        "created_at",
-    )
-
-    search_fields = (
-        "title",
-        "description",
-        "teacher__username",
-        "teacher__first_name",
-        "teacher__last_name",
-    )
-
-    inlines = [
-        QuestionInline,
-    ]
+    @admin.display(description="Preguntas")
+    def question_count(self, obj):
+        return obj.questions.count()
 
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = (
-        "short_text",
-        "quiz",
-        "order",
-        "time_limit",
-        "points",
-    )
+    list_display = ("short_text", "question_type", "quiz", "order", "time_limit", "points")
+    list_filter = ("question_type", "quiz", "time_limit")
+    search_fields = ("text", "quiz__title")
+    ordering = ("quiz", "order")
+    readonly_fields = ("created_at",)
+    inlines = (AnswerOptionInline,)
 
-    list_filter = (
-        "quiz",
-        "time_limit",
-    )
-
-    search_fields = (
-        "text",
-        "quiz__title",
-    )
-
-    ordering = (
-        "quiz",
-        "order",
-    )
-
-    inlines = [
-        AnswerOptionInline,
-    ]
-
+    @admin.display(description="Pregunta")
     def short_text(self, obj):
         return obj.text[:70]
-
-    short_text.short_description = "Pregunta"
 
 
 @admin.register(AnswerOption)
 class AnswerOptionAdmin(admin.ModelAdmin):
-    list_display = (
-        "text",
-        "question",
-        "is_correct",
-        "order",
-    )
-
-    list_filter = (
-        "is_correct",
-        "question__quiz",
-    )
-
-    search_fields = (
-        "text",
-        "question__text",
-    )
+    list_display = ("text", "match_text", "question", "is_correct", "order")
+    list_filter = ("is_correct", "question__question_type", "question__quiz")
+    search_fields = ("text", "match_text", "question__text")

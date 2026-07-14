@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Resultados {{ game.pin }} | ExamPlay{% endblock %}
+{% block content %}
+<section class="py-5"><div class="container">
+  <a href="{% url 'livegames:history' %}" class="text-decoration-none">← Volver al historial</a>
+  <div class="card border-0 shadow-sm my-4"><div class="card-body p-4"><span class="badge text-bg-dark">PIN {{ game.pin }}</span><h1 class="h2 mt-2">{{ game.quiz.title }}</h1><p class="text-muted mb-0">Creada el {{ game.created_at|date:'d/m/Y H:i' }} · {{ game.get_status_display }}</p></div></div>
+  <h2 class="h3">Clasificación y detalle</h2>
+  {% if participants %}<div class="accordion" id="resultsAccordion">
+    {% for item in participants %}<div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#participant{{ item.pk }}"><span class="ranking-number">#{{ forloop.counter }}</span>{% include "livegames/_avatar.html" with avatar=item.avatar size="sm" %}<strong class="ms-2">{{ item.nickname }}</strong><span class="ms-auto me-3">{{ item.score }} pts</span></button></h3><div id="participant{{ item.pk }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#resultsAccordion"><div class="accordion-body"><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Pregunta</th><th>Tipo</th><th>Respuesta</th><th>Resultado</th><th>Tiempo</th><th>Puntos</th></tr></thead><tbody>{% for answer in item.answers.all %}<tr><td>{{ answer.question.text|truncatechars:60 }}</td><td>{{ answer.question.get_question_type_display }}</td><td>{{ answer.response_display }}</td><td>{% if answer.is_correct %}<span class="text-success">Correcta</span>{% else %}<span class="text-danger">Incorrecta</span>{% endif %}</td><td>{{ answer.response_time_ms }} ms</td><td>{{ answer.points_earned }}</td></tr>{% empty %}<tr><td colspan="6">Sin respuestas registradas.</td></tr>{% endfor %}</tbody></table></div></div></div></div>{% endfor %}
+  </div>{% else %}<div class="alert alert-info">No hubo participantes.</div>{% endif %}
+</div></section>
+{% endblock %}

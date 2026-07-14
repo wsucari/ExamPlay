@@ -1,0 +1,21 @@
+# Entornos y Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Django local
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Configuración y herramientas
+.env
+.idea/
+.vscode/
+.coverage
+htmlcov/
+*.log
+.DS_Store
+Thumbs.db
