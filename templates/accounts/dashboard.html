@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}
+Panel docente | ExamPlay
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-5">
+    <div class="container">
+        <div class="mb-5">
+            <p class="text-primary fw-semibold mb-1">
+                Panel docente
+            </p>
+
+            <h1 class="display-6 fw-bold">
+                Bienvenido,
+                {{ user.first_name|default:user.username }}
+            </h1>
+
+            <p class="text-muted">
+                Desde este panel podrás crear cuestionarios,
+                iniciar partidas y revisar resultados.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="card dashboard-card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="dashboard-icon mb-3">
+                            📝
+                        </div>
+
+                        <h2 class="h4 fw-bold">
+                            Mis cuestionarios
+                        </h2>
+
+                        <p class="text-muted">
+                            Crea, edita y organiza tus evaluaciones.
+                        </p>
+
+                        <a
+                            href="{% url 'quizzes:list' %}"
+                            class="btn btn-primary">
+                             cuestionarios
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="card dashboard-card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="dashboard-icon mb-3">
+                            🎮
+                        </div>
+
+                        <h2 class="h4 fw-bold">
+                            Iniciar partida
+                        </h2>
+
+                        <p class="text-muted">
+                            Genera un PIN y juega en vivo con tus estudiantes.
+                        </p>
+
+                        <a href="#" class="btn btn-success">
+                            Nueva partida
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="card dashboard-card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="dashboard-icon mb-3">
+                            📊
+                        </div>
+
+                        <h2 class="h4 fw-bold">
+                            Resultados
+                        </h2>
+
+                        <p class="text-muted">
+                            Revisa puntajes y desempeño de los participantes.
+                        </p>
+
+                        <a href="#" class="btn btn-dark">
+                            Ver resultados
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

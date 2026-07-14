@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}
+Iniciar sesión | ExamPlay
+{% endblock %}
+
+{% block content %}
+<section class="auth-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h1 class="h2 fw-bold">
+                                Iniciar sesión
+                            </h1>
+
+                            <p class="text-muted">
+                                Accede a tu panel docente.
+                            </p>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label
+                                    for="username"
+                                    class="form-label"
+                                >
+                                    Nombre de usuario
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="username"
+                                    class="form-control"
+                                    placeholder="Ingrese su usuario"
+                                    required
+                                    autofocus
+                                >
+                            </div>
+
+                            <div class="mb-4">
+                                <label
+                                    for="password"
+                                    class="form-label"
+                                >
+                                    Contraseña
+                                </label>
+
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="form-control"
+                                    placeholder="Ingrese su contraseña"
+                                    required
+                                >
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-lg w-100"
+                            >
+                                Ingresar
+                            </button>
+                        </form>
+
+                        <p class="text-center mt-4 mb-0">
+                            ¿Todavía no tienes una cuenta?
+
+                            <a href="{% url 'accounts:register' %}">
+                                Crear cuenta
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
